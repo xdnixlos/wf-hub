@@ -1,12 +1,27 @@
+version: '3.8'
+
 services:
   backend:
     build: ./backend
     ports:
       - "8000:8000"
-    restart: always
+    volumes:
+      - ./backend:/app
+      - ./data:/app/data # Persistence for DB and Uploads
+      - ~/.ssh:/root/.ssh:ro # Mount SSH keys for Paramiko (read-only)
+    environment:
+      - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - SSH_HOST=${SSH_HOST:-192.168.1.100}
+      - SSH_USER=${SSH_USER:-root}
+    command: uvicorn main:app --host 0.0.0.0 --port 8000 --reload
 
   frontend:
     build: ./frontend
     ports:
       - "5173:5173"
-    restart: always
+    volumes:
+      - ./frontend:/app
+      - /app/node_modules
+    environment:
+      - VITE_API_URL=http://localhost:8000
+    command: npm run dev -- --host
