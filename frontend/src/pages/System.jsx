@@ -1,111 +1,102 @@
-import React, { useEffect, useState } from 'react';
-import { Activity, Server, HardDrive, Clock } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '../context/AuthContext';
 
 const System = () => {
-    const [data, setData] = useState(null);
+    const { token } = useAuth();
+    const [stats, setStats] = useState(null);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        fetch('http://localhost:8000/api/system/stats')
-            .then(res => res.json())
-            .then(setData)
-            .catch(err => console.error("Failed to fetch system stats", err));
-    }, []);
+        const fetchStats = async () => {
+            try {
+                const res = await fetch('http://localhost:8000/api/system/stats', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    setStats(data);
+                }
+            } catch (error) {
+                console.error("Failed to fetch stats", error);
+            } finally {
+                setLoading(false);
+            }
+        };
 
-    if (!data) return <div className="text-gray-400">Loading System Data...</div>;
+        fetchStats();
+        const interval = setInterval(fetchStats, 5000); // Poll every 5s
+        return () => clearInterval(interval);
+    }, [token]);
+
+    if (loading && !stats) {
+        return <div className="p-8 text-white">Loading System Stats...</div>;
+    }
 
     return (
-        <div className="space-y-8">
-            <h2 className="text-2xl font-semibold">System Monitor</h2>
+        <div className="p-8 text-white">
+            <h1 className="text-3xl font-bold mb-8 bg-clip-text text-transparent bg-gradient-to-r from-green-400 to-emerald-600">
+                System Monitor
+            </h1>
 
-            {/* Top Stats - Gauges */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Hetzner Node */}
-                <div className="glass-panel p-6 rounded-2xl border-t-4 border-t-wf-cyan">
-                    <div className="flex items-center gap-3 mb-6">
-                        <Server className="text-wf-cyan" />
-                        <h3 className="text-lg font-medium">Hetzner Root</h3>
-                    </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-black/20 p-4 rounded-xl text-center">
-                            <div className="text-gray-400 text-xs mb-1">CPU Load</div>
-                            <div className="text-2xl font-bold text-wf-cyan">{data.hetzner.cpu}%</div>
-                        </div>
-                        <div className="bg-black/20 p-4 rounded-xl text-center">
-                            <div className="text-gray-400 text-xs mb-1">RAM Usage</div>
-                            <div className="text-2xl font-bold text-wf-cyan">{data.hetzner.ram}%</div>
-                        </div>
-                        <div className="bg-black/20 p-4 rounded-xl text-center">
-                            <div className="text-gray-400 text-xs mb-1">Disk I/O</div>
-                            <div className="text-lg font-medium">{data.hetzner.disk_io}</div>
-                        </div>
-                        <div className="bg-black/20 p-4 rounded-xl text-center">
-                            <div className="text-gray-400 text-xs mb-1">Uptime</div>
-                            <div className="text-lg font-medium">{data.hetzner.uptime}</div>
-                        </div>
+            {/* Main Stats */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                    <h3 className="text-gray-400 mb-2">CPU Usage</h3>
+                    <div className="text-4xl font-bold mb-4">{stats?.cpu || 0}%</div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div className="bg-green-500 h-2 rounded-full transition-all duration-500" style={{ width: `${stats?.cpu || 0}%` }}></div>
                     </div>
                 </div>
-
-                {/* Proxmox Cluster */}
-                <div className="glass-panel p-6 rounded-2xl border-t-4 border-t-wf-purple">
-                    <div className="flex items-center gap-3 mb-6">
-                        <Activity className="text-wf-purple" />
-                        <h3 className="text-lg font-medium">Proxmox Cluster</h3>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                    <h3 className="text-gray-400 mb-2">RAM Usage</h3>
+                    <div className="text-4xl font-bold mb-4">{stats?.ram || 0}%</div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div className="bg-blue-500 h-2 rounded-full transition-all duration-500" style={{ width: `${stats?.ram || 0}%` }}></div>
                     </div>
-                    <div className="grid grid-cols-2 gap-4">
-                        <div className="bg-black/20 p-4 rounded-xl text-center">
-                            <div className="text-gray-400 text-xs mb-1">CPU Load</div>
-                            <div className="text-2xl font-bold text-wf-purple">{data.proxmox.cpu}%</div>
-                        </div>
-                        <div className="bg-black/20 p-4 rounded-xl text-center">
-                            <div className="text-gray-400 text-xs mb-1">RAM Usage</div>
-                            <div className="text-2xl font-bold text-wf-purple">{data.proxmox.ram}%</div>
-                        </div>
-                        <div className="bg-black/20 p-4 rounded-xl text-center">
-                            <div className="text-gray-400 text-xs mb-1">Disk I/O</div>
-                            <div className="text-lg font-medium">{data.proxmox.disk_io}</div>
-                        </div>
-                        <div className="bg-black/20 p-4 rounded-xl text-center">
-                            <div className="text-gray-400 text-xs mb-1">Uptime</div>
-                            <div className="text-lg font-medium">{data.proxmox.uptime}</div>
-                        </div>
+                </div>
+                <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                    <h3 className="text-gray-400 mb-2">Disk Usage</h3>
+                    <div className="text-4xl font-bold mb-4">{stats?.disk || 0}%</div>
+                    <div className="w-full bg-gray-700 rounded-full h-2">
+                        <div className="bg-purple-500 h-2 rounded-full transition-all duration-500" style={{ width: `${stats?.disk || 0}%` }}></div>
                     </div>
                 </div>
             </div>
 
-            {/* LXC Containers Table */}
-            <div className="glass-panel p-6 rounded-2xl">
-                <h3 className="text-lg font-medium mb-4">LXC Containers</h3>
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left border-collapse">
-                        <thead>
-                            <tr className="text-gray-400 border-b border-white/10">
-                                <th className="p-3 font-normal">ID</th>
-                                <th className="p-3 font-normal">Name</th>
-                                <th className="p-3 font-normal">IP Address</th>
-                                <th className="p-3 font-normal">Status</th>
+            {/* Containers */}
+            <h2 className="text-2xl font-bold mb-4">Containers</h2>
+            <div className="bg-white/5 border border-white/10 rounded-2xl overflow-hidden">
+                <table className="w-full text-left">
+                    <thead className="bg-white/5 text-gray-400">
+                        <tr>
+                            <th className="p-4">ID</th>
+                            <th className="p-4">Name</th>
+                            <th className="p-4">Status</th>
+                            <th className="p-4">IP</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-white/5">
+                        {stats?.containers?.map((container, idx) => (
+                            <tr key={idx} className="hover:bg-white/5 transition-colors">
+                                <td className="p-4 font-mono text-sm">{container.id}</td>
+                                <td className="p-4 font-bold">{container.name}</td>
+                                <td className="p-4">
+                                    <span className={`px-2 py-1 rounded text-xs ${container.status === 'running' ? 'bg-green-500/20 text-green-300' : 'bg-red-500/20 text-red-300'}`}>
+                                        {container.status}
+                                    </span>
+                                </td>
+                                <td className="p-4 text-gray-400">{container.ip}</td>
                             </tr>
-                        </thead>
-                        <tbody>
-                            {data.containers.map((container) => (
-                                <tr key={container.id} className="border-b border-white/5 hover:bg-white/5 transition-colors">
-                                    <td className="p-3 text-gray-400">#{container.id}</td>
-                                    <td className="p-3 font-medium">{container.name}</td>
-                                    <td className="p-3 text-gray-400 font-mono text-sm">{container.ip}</td>
-                                    <td className="p-3">
-                                        <span className={`inline-flex items-center gap-2 px-2 py-1 rounded-full text-xs font-medium ${container.status === 'running'
-                                                ? 'bg-green-500/10 text-green-400 border border-green-500/20'
-                                                : 'bg-red-500/10 text-red-400 border border-red-500/20'
-                                            }`}>
-                                            <span className={`w-1.5 h-1.5 rounded-full ${container.status === 'running' ? 'bg-green-400' : 'bg-red-400'
-                                                }`} />
-                                            {container.status.toUpperCase()}
-                                        </span>
-                                    </td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                </div>
+                        ))}
+                        {(!stats?.containers || stats.containers.length === 0) && (
+                            <tr>
+                                <td colSpan="4" className="p-8 text-center text-gray-500">
+                                    No containers found or connection failed.
+                                </td>
+                            </tr>
+                        )}
+                    </tbody>
+                </table>
             </div>
         </div>
     );

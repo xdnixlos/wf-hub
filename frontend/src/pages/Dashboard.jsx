@@ -1,128 +1,192 @@
 import React, { useState, useEffect } from 'react';
-import { Send, ExternalLink, Activity, Cpu, HardDrive } from 'lucide-react';
+import { useAuth } from '../context/AuthContext';
 
 const Dashboard = () => {
-    const [time, setTime] = useState(new Date());
+    const { token, user } = useAuth();
+    const [news, setNews] = useState([]);
+    const [showNewsModal, setShowNewsModal] = useState(false);
+
+    // News Form
+    const [newsTitle, setNewsTitle] = useState('');
+    const [newsContent, setNewsContent] = useState('');
+    const [newsCategory, setNewsCategory] = useState('WF-TECH');
 
     useEffect(() => {
-        const timer = setInterval(() => setTime(new Date()), 1000);
-        return () => clearInterval(timer);
+        fetchNews();
     }, []);
 
-    const formatTime = (date) => {
-        return date.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' });
+    const fetchNews = async () => {
+        try {
+            const res = await fetch('http://localhost:8000/api/news', {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setNews(data);
+            }
+        } catch (error) {
+            console.error("Failed to fetch news", error);
+        }
+    };
+
+    const handleCreateNews = async (e) => {
+        e.preventDefault();
+        try {
+            const res = await fetch('http://localhost:8000/api/news', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                    title: newsTitle,
+                    content: newsContent,
+                    category: newsCategory
+                })
+            });
+            if (res.ok) {
+                setShowNewsModal(false);
+                setNewsTitle('');
+                setNewsContent('');
+                fetchNews();
+            }
+        } catch (error) {
+            console.error("Failed to create news", error);
+        }
     };
 
     return (
-        <div className="space-y-6">
-            <h2 className="text-2xl font-semibold mb-8">WF-HUB Mission Control</h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {/* Widget 1: Welcome & Time */}
-                <div className="glass-panel p-6 rounded-2xl relative overflow-hidden group border-l-4 border-l-wf-cyan">
-                    <div className="absolute top-0 right-0 p-4 opacity-20 group-hover:opacity-40 transition-opacity">
-                        {/* Smoke effect placeholder */}
-                        <div className="w-32 h-32 bg-wf-cyan blur-[60px] rounded-full"></div>
-                    </div>
-
-                    <h3 className="text-xl font-medium mb-1">Welcome Admin</h3>
-                    <p className="text-gray-400 text-sm mb-6">Current time as a amallan</p>
-
-                    <div className="text-5xl font-bold mb-4 tracking-wider">
-                        {formatTime(time)} <span className="text-lg text-gray-400 font-normal">AM</span>
-                    </div>
-
-                    <div className="flex items-center gap-2">
-                        <span className="text-gray-400">Status:</span>
-                        <span className="text-wf-red font-medium drop-shadow-[0_0_8px_rgba(255,69,0,0.8)]">Glowred</span>
-                    </div>
+        <div className="p-8 text-white">
+            <div className="flex justify-between items-center mb-8">
+                <div>
+                    <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-purple-400 to-pink-600">
+                        Welcome back, {user?.full_name || 'User'}
+                    </h1>
+                    <p className="text-gray-400 mt-2">Here is what's happening in the ecosystem.</p>
                 </div>
-
-                {/* Widget 2: AI Quick Assist */}
-                <div className="glass-panel p-6 rounded-2xl relative border-t-2 border-t-wf-red/50 flex flex-col justify-between">
-                    <div className="absolute top-0 right-0 w-full h-full bg-gradient-to-bl from-wf-red/5 to-transparent pointer-events-none" />
-
-                    <div>
-                        <h3 className="text-xl font-medium mb-2">AI Quick Assist</h3>
-                        <p className="text-gray-400 text-sm mb-6">Frag your text and asteis alers.</p>
-                    </div>
-
-                    <div className="relative">
-                        <input
-                            type="text"
-                            placeholder="Frag Gemini..."
-                            className="w-full bg-black/30 border border-white/10 rounded-xl py-3 px-4 pr-12 text-white placeholder-gray-500 focus:outline-none focus:border-wf-cyan/50 focus:ring-1 focus:ring-wf-cyan/50 transition-all"
-                        />
-                        <button className="absolute right-3 top-1/2 -translate-y-1/2 text-wf-cyan hover:text-white transition-colors">
-                            <Send size={20} />
-                        </button>
-                    </div>
-                </div>
-
-                {/* Widget 3: System Health */}
-                <div className="glass-panel p-6 rounded-2xl border-b-4 border-b-wf-cyan">
-                    <h3 className="text-xl font-medium mb-6">System Health</h3>
-
-                    <div className="flex justify-around items-center">
-                        {/* CPU Gauge */}
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="text-gray-400 text-sm mb-1">CPU</div>
-                            <div className="relative w-24 h-24 flex items-center justify-center">
-                                <svg className="w-full h-full transform -rotate-90">
-                                    <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-700" />
-                                    <circle cx="48" cy="48" r="40" stroke="#4ade80" strokeWidth="8" fill="transparent" strokeDasharray="251.2" strokeDashoffset="138" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(74,222,128,0.5)]" />
-                                </svg>
-                                <span className="absolute text-xl font-bold">45%</span>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">Hetzner</div>
-                        </div>
-
-                        {/* RAM Gauge */}
-                        <div className="flex flex-col items-center gap-2">
-                            <div className="text-gray-400 text-sm mb-1">RAM</div>
-                            <div className="relative w-24 h-24 flex items-center justify-center">
-                                <svg className="w-full h-full transform -rotate-90">
-                                    <circle cx="48" cy="48" r="40" stroke="currentColor" strokeWidth="8" fill="transparent" className="text-gray-700" />
-                                    <circle cx="48" cy="48" r="40" stroke="#0ea5e9" strokeWidth="8" fill="transparent" strokeDasharray="251.2" strokeDashoffset="75" strokeLinecap="round" className="drop-shadow-[0_0_10px_rgba(14,165,233,0.5)]" />
-                                </svg>
-                                <span className="absolute text-xl font-bold">70%</span>
-                            </div>
-                            <div className="text-xs text-gray-500 mt-1">Proxmox</div>
-                        </div>
-                    </div>
-                </div>
-
-                {/* Widget 4: Quick Links */}
-                <div className="space-y-4">
-                    {/* Link 1 */}
-                    <a href="#" className="glass-panel p-4 rounded-xl flex items-center justify-between group hover:bg-white/5 transition-all border-l-4 border-l-wf-cyan">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-wf-cyan/20 to-wf-cyan/5 flex items-center justify-center text-wf-cyan font-bold text-xl border border-wf-cyan/20">
-                                WF
-                            </div>
-                            <div>
-                                <div className="text-xs text-gray-400">WF-TECH</div>
-                                <div className="font-medium group-hover:text-wf-cyan transition-colors">Master-Mind Website</div>
-                            </div>
-                        </div>
-                        <ExternalLink size={18} className="text-gray-500 group-hover:text-white" />
-                    </a>
-
-                    {/* Link 2 */}
-                    <a href="#" className="glass-panel p-4 rounded-xl flex items-center justify-between group hover:bg-white/5 transition-all border-l-4 border-l-wf-purple">
-                        <div className="flex items-center gap-4">
-                            <div className="w-12 h-12 rounded-lg bg-gradient-to-br from-wf-purple/20 to-wf-purple/5 flex items-center justify-center text-wf-purple font-bold text-xl border border-wf-purple/20">
-                                JJ
-                            </div>
-                            <div>
-                                <div className="text-xs text-gray-400">JJ-TECH</div>
-                                <div className="font-medium group-hover:text-wf-purple transition-colors">Partner Website</div>
-                            </div>
-                        </div>
-                        <ExternalLink size={18} className="text-gray-500 group-hover:text-white" />
-                    </a>
+                <div className="flex gap-4">
+                    <button
+                        onClick={() => setShowNewsModal(true)}
+                        className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors shadow-lg shadow-purple-500/20"
+                    >
+                        + Post News
+                    </button>
                 </div>
             </div>
+
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                {/* News Feed */}
+                <div className="lg:col-span-2 space-y-6">
+                    <h2 className="text-2xl font-bold mb-4">Latest Updates</h2>
+                    {news.map((item) => (
+                        <div key={item.id} className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-6 hover:bg-white/10 transition-all">
+                            <div className="flex justify-between items-start mb-4">
+                                <div>
+                                    <span className="px-2 py-1 bg-blue-500/20 text-blue-300 text-xs rounded border border-blue-500/30 mb-2 inline-block">
+                                        {item.category}
+                                    </span>
+                                    <h3 className="text-xl font-bold">{item.title}</h3>
+                                </div>
+                                <span className="text-sm text-gray-500">{item.date}</span>
+                            </div>
+                            <p className="text-gray-300 leading-relaxed">
+                                {item.content}
+                            </p>
+                        </div>
+                    ))}
+                    {news.length === 0 && (
+                        <div className="text-center text-gray-500 py-12 bg-white/5 rounded-2xl">
+                            No news updates available.
+                        </div>
+                    )}
+                </div>
+
+                {/* Quick Stats / Widgets */}
+                <div className="space-y-6">
+                    <div className="bg-gradient-to-br from-blue-600 to-blue-800 rounded-2xl p-6 shadow-xl">
+                        <h3 className="text-lg font-bold mb-2">System Status</h3>
+                        <div className="flex items-center gap-2">
+                            <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
+                            <span>All Systems Operational</span>
+                        </div>
+                    </div>
+
+                    <div className="bg-white/5 border border-white/10 rounded-2xl p-6">
+                        <h3 className="text-lg font-bold mb-4">Quick Links</h3>
+                        <div className="grid grid-cols-2 gap-4">
+                            <a href="/wiki" className="p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors">
+                                📚 Wiki
+                            </a>
+                            <a href="/projects" className="p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors">
+                                🚀 Projects
+                            </a>
+                            <a href="/files" className="p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors">
+                                📂 Files
+                            </a>
+                            <a href="/system" className="p-3 bg-white/5 hover:bg-white/10 rounded-lg text-center transition-colors">
+                                🖥️ System
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            {/* News Modal */}
+            {showNewsModal && (
+                <div className="fixed inset-0 bg-black/80 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <div className="bg-gray-900 border border-white/20 rounded-2xl p-8 w-full max-w-lg shadow-2xl">
+                        <h2 className="text-2xl font-bold mb-6">Post News Update</h2>
+                        <form onSubmit={handleCreateNews} className="space-y-4">
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">Title</label>
+                                <input
+                                    value={newsTitle}
+                                    onChange={e => setNewsTitle(e.target.value)}
+                                    className="w-full bg-black/50 border border-gray-700 rounded-lg px-4 py-2 focus:border-purple-500 outline-none"
+                                    required
+                                />
+                            </div>
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">Category</label>
+                                <select
+                                    value={newsCategory}
+                                    onChange={e => setNewsCategory(e.target.value)}
+                                    className="w-full bg-black/50 border border-gray-700 rounded-lg px-4 py-2 focus:border-purple-500 outline-none text-white"
+                                >
+                                    <option value="WF-TECH">WF-TECH</option>
+                                    <option value="DEV">DEV</option>
+                                    <option value="ORG">ORG</option>
+                                    <option value="ANNOUNCEMENT">ANNOUNCEMENT</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label className="block text-sm text-gray-400 mb-1">Content</label>
+                                <textarea
+                                    value={newsContent}
+                                    onChange={e => setNewsContent(e.target.value)}
+                                    className="w-full bg-black/50 border border-gray-700 rounded-lg px-4 py-2 focus:border-purple-500 outline-none h-32"
+                                    required
+                                />
+                            </div>
+                            <div className="flex justify-end gap-3 mt-6">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewsModal(false)}
+                                    className="px-4 py-2 hover:bg-white/10 rounded-lg transition-colors"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    type="submit"
+                                    className="px-4 py-2 bg-purple-600 hover:bg-purple-500 rounded-lg transition-colors"
+                                >
+                                    Post Update
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 };
