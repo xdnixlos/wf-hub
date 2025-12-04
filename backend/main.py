@@ -23,41 +23,67 @@ def read_root():
 
 # --- Mock Data Endpoints ---
 
-@app.get("/api/system/stats")
-def get_system_stats():
-    return {
-        "hetzner": {"cpu": 45, "ram": 32, "disk_io": "120 MB/s", "uptime": "14d 2h"},
-        "proxmox": {"cpu": 70, "ram": 85, "disk_io": "450 MB/s", "uptime": "45d 12h"},
-        "containers": [
-            {"id": 100, "name": "nginx-proxy", "status": "running", "ip": "10.0.0.5"},
-            {"id": 101, "name": "db-postgres", "status": "running", "ip": "10.0.0.6"},
-            {"id": 102, "name": "app-backend", "status": "running", "ip": "10.0.0.7"},
-            {"id": 103, "name": "ci-runner", "status": "stopped", "ip": "10.0.0.8"},
-            {"id": 104, "name": "monitoring", "status": "running", "ip": "10.0.0.9"},
-        ]
-    }
-
 @app.get("/api/news")
 def get_news():
     return [
-        {"id": 1, "title": "New Server Deployed", "date": "2025-12-04", "category": "WF-TECH", "content": "Hetzner node #4 is now live and serving traffic."},
-        {"id": 2, "title": "Partner Meeting", "date": "2025-12-03", "category": "JJ-TECH", "content": "Quarterly review with JJ-Tech partners scheduled."},
-        {"id": 3, "title": "Security Patch", "date": "2025-12-02", "category": "WF-TECH", "content": "Applied critical security patches to all edge nodes."},
+        {
+            "id": 1, 
+            "title": "WF-HUB Live", 
+            "category": "WF-TECH", 
+            "date": "2025-12-04", 
+            "content": "Das System ist online! Alle Dienste sind verfügbar und laufen stabil."
+        },
+        {
+            "id": 2, 
+            "title": "Neues Feature: Kanban", 
+            "category": "DEV", 
+            "date": "2025-12-03", 
+            "content": "Das Projekt-Board ist nun verfügbar. Aufgaben können per Drag & Drop verschoben werden."
+        },
+        {
+            "id": 3, 
+            "title": "Wartungsarbeiten", 
+            "category": "SYS", 
+            "date": "2025-12-01", 
+            "content": "Geplante Wartung der Datenbank-Server am kommenden Sonntag."
+        },
+        {
+            "id": 4, 
+            "title": "Team Meeting", 
+            "category": "ORG", 
+            "date": "2025-11-28", 
+            "content": "Monatliches All-Hands Meeting im Konferenzraum A."
+        }
     ]
+
+@app.get("/api/system/stats")
+def get_system_stats():
+    return {
+        "cpu": 45,
+        "ram": 60,
+        "disk": 30,
+        "containers": [
+            {"id": 100, "name": "proxy", "status": "running", "ip": "10.0.0.1"},
+            {"id": 105, "name": "wf-hub", "status": "running", "ip": "10.0.0.5"},
+            {"id": 106, "name": "db-main", "status": "running", "ip": "10.0.0.6"},
+            {"id": 107, "name": "cache-redis", "status": "running", "ip": "10.0.0.7"},
+            {"id": 108, "name": "worker-1", "status": "stopped", "ip": "10.0.0.8"}
+        ]
+    }
 
 @app.get("/api/projects")
 def get_projects():
     return {
         "todo": [
-            {"id": 1, "title": "Refactor Auth", "tag": "Backend"},
-            {"id": 2, "title": "Update Deps", "tag": "Maintenance"},
+            {"id": 1, "title": "SSL Fix", "user": "Admin", "tag": "Security"},
+            {"id": 4, "title": "Mobile View", "user": "Designer", "tag": "UI"}
         ],
-        "in_progress": [
-            {"id": 3, "title": "Dashboard UI", "tag": "Frontend"},
-            {"id": 4, "title": "API Docs", "tag": "Docs"},
+        "inprogress": [
+            {"id": 2, "title": "Deployment", "user": "JJ", "tag": "DevOps"},
+            {"id": 5, "title": "API Integration", "user": "Dev", "tag": "Backend"}
         ],
         "done": [
-            {"id": 5, "title": "Init Repo", "tag": "DevOps"},
+            {"id": 3, "title": "Initial Setup", "user": "Admin", "tag": "Core"}
         ]
     }
 
@@ -65,15 +91,26 @@ def get_projects():
 def get_wiki_structure():
     return [
         {
-            "category": "Infrastructure",
-            "articles": ["Server Setup", "Network Topology", "Backup Strategy"]
+            "category": "Onboarding",
+            "articles": [
+                {"id": 1, "title": "Erste Schritte"},
+                {"id": 2, "title": "Einrichtung Arbeitsplatz"},
+                {"id": 3, "title": "Team Vorstellung"}
+            ]
+        },
+        {
+            "category": "Server",
+            "articles": [
+                {"id": 4, "title": "SSH Access"},
+                {"id": 5, "title": "Deployment Guide"},
+                {"id": 6, "title": "Monitoring"}
+            ]
         },
         {
             "category": "Development",
-            "articles": ["Coding Standards", "Git Workflow", "API Guidelines"]
-        },
-        {
-            "category": "Onboarding",
-            "articles": ["First Day", "Tools Setup", "Contacts"]
+            "articles": [
+                {"id": 7, "title": "Coding Guidelines"},
+                {"id": 8, "title": "Git Workflow"}
+            ]
         }
     ]
