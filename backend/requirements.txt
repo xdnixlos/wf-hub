@@ -1,10 +1,12 @@
-fastapi
-uvicorn
-sqlmodel
+fastapi==0.100.0
+uvicorn==0.23.0
+python-dotenv
+sqlmodel==0.0.8
+pydantic==1.10.13
 passlib[bcrypt]
 python-jose[cryptography]
 python-multipart
 paramiko
 aiofiles
 google-generativeai
-python-dotenv
+requests
